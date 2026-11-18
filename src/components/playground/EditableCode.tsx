@@ -65,12 +65,10 @@ type ExecutionStatus =
 
 const EXECUTION_TIMEOUT = 6000;
 
-// Keep disabled until security testing is complete.
+// Do not enable until worker CSP and isolation tests pass.
 const CODE_EXECUTION_ENABLED = false;
 
-function isOutputEntry(
-  value: unknown
-): value is OutputEntry {
+function isOutputEntry(value: unknown): value is OutputEntry {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -95,16 +93,21 @@ function isSandboxResponse(
 
   const data = value as Record<string, unknown>;
 
-  if (data.type === "ready") return true;
+  if (data.type === "ready") {
+    return true;
+  }
 
   if (
     typeof data.id !== "string" ||
+    data.id.length === 0 ||
     data.id.length > 128
   ) {
     return false;
   }
 
-  if (data.type === "stopped") return true;
+  if (data.type === "stopped") {
+    return true;
+  }
 
   if (
     data.type !== "complete" &&
@@ -143,13 +146,17 @@ export function EditableCode({
     useState<OutputEntry[]>([]);
 
   const compilerRef = useRef<Worker | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(
-    null
-  );
 
-  const timeoutRef = useRef<
-    ReturnType<typeof setTimeout> | null
-  >(null);
+  const iframeRef =
+    useRef<HTMLIFrameElement | null>(null);
+
+  const channelRef =
+    useRef<MessageChannel | null>(null);
+
+  const timeoutRef =
+    useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
 
   const runIdRef = useRef(0);
 
@@ -164,6 +171,13 @@ export function EditableCode({
 
     compilerRef.current?.terminate();
     compilerRef.current = null;
+
+    if (channelRef.current) {
+      channelRef.current.port1.onmessage = null;
+      channelRef.current.port1.close();
+      channelRef.current.port2.close();
+      channelRef.current = null;
+    }
 
     iframeRef.current?.remove();
     iframeRef.current = null;
@@ -188,7 +202,12 @@ export function EditableCode({
   function fail(message: string) {
     cleanup();
     setStatus("error");
-    setOutput([{ level: "error", text: message }]);
+    setOutput([
+      {
+        level: "error",
+        text: message,
+      },
+    ]);
   }
 
   function stopExecution() {
@@ -205,20 +224,29 @@ export function EditableCode({
   }
 
   function runCode() {
-    if (!CODE_EXECUTION_ENABLED || running) return;
+    if (!CODE_EXECUTION_ENABLED || running) {
+      return;
+    }
 
     const sandboxOrigin = getSandboxOrigin();
 
-    if (!sandboxOrigin) {
+    if (!sandboxOrigin || !SANDBOX_URL) {
       fail("Sandbox URL is not configured.");
       return;
     }
 
+    if (sandboxOrigin === window.location.origin) {
+      fail("Sandbox must use a separate origin.");
+      return;
+    }
+
     runIdRef.current += 1;
+
     const runId = runIdRef.current;
     const requestId = crypto.randomUUID();
 
     cleanup();
+
     setStatus("running");
     setOutput([]);
 
@@ -226,7 +254,9 @@ export function EditableCode({
       runId === runIdRef.current;
 
     timeoutRef.current = setTimeout(() => {
-      if (!isCurrent()) return;
+      if (!isCurrent()) {
+        return;
+      }
 
       runIdRef.current += 1;
       fail("Execution timed out.");
@@ -258,7 +288,9 @@ export function EditableCode({
     compiler.onmessage = (
       event: MessageEvent<CompileResponse>
     ) => {
-      if (!isCurrent()) return;
+      if (!isCurrent()) {
+        return;
+      }
 
       compiler.terminate();
       compilerRef.current = null;
@@ -284,6 +316,14 @@ export function EditableCode({
         return;
       }
 
+      if (
+        typeof result.javascript !== "string" ||
+        result.javascript.length > 200_000
+      ) {
+        fail("Compiled JavaScript is invalid or too large.");
+        return;
+      }
+
       const iframe = document.createElement("iframe");
 
       iframe.title = "Code execution sandbox";
@@ -294,20 +334,15 @@ export function EditableCode({
 
       iframeRef.current = iframe;
 
-      const onMessage = (
+      const messageChannel = new MessageChannel();
+      channelRef.current = messageChannel;
+
+      let initialized = false;
+
+      messageChannel.port1.onmessage = (
         messageEvent: MessageEvent<unknown>
       ) => {
-        if (!isCurrent()) return;
-
-        if (
-          messageEvent.source !== iframe.contentWindow
-        ) {
-          return;
-        }
-
-        // An iframe without allow-same-origin sends
-        // messages with the opaque origin "null".
-        if (messageEvent.origin !== "null") {
+        if (!isCurrent()) {
           return;
         }
 
@@ -318,23 +353,24 @@ export function EditableCode({
         const response = messageEvent.data;
 
         if (response.type === "ready") {
-          iframe.contentWindow?.postMessage(
-            {
-              type: "execute",
-              id: requestId,
-              javascript: result.javascript,
-            },
-            sandboxOrigin
-          );
+          if (initialized) {
+            return;
+          }
+
+          initialized = true;
+
+          messageChannel.port1.postMessage({
+            type: "execute",
+            id: requestId,
+            javascript: result.javascript,
+          });
+
           return;
         }
 
-        if (response.id !== requestId) return;
-
-        window.removeEventListener(
-          "message",
-          onMessage
-        );
+        if (!initialized || response.id !== requestId) {
+          return;
+        }
 
         if (response.type === "stopped") {
           stopExecution();
@@ -345,6 +381,7 @@ export function EditableCode({
 
         if (response.type === "complete") {
           setStatus("success");
+
           setOutput(
             response.output.length
               ? response.output
@@ -358,6 +395,7 @@ export function EditableCode({
           );
         } else {
           setStatus("error");
+
           setOutput([
             ...response.output,
             {
@@ -368,17 +406,23 @@ export function EditableCode({
         }
       };
 
-      window.addEventListener(
-        "message",
-        onMessage
-      );
+      messageChannel.port1.start();
 
       iframe.onload = () => {
-        if (!isCurrent()) return;
+        if (!isCurrent()) {
+          return;
+        }
 
+        // The iframe has an opaque origin.
+        // The wildcard is used ONLY to transfer
+        // a private MessagePort to this iframe.
+        //
+        // All execution messages then travel
+        // through that dedicated port.
         iframe.contentWindow?.postMessage(
           { type: "init" },
-          sandboxOrigin
+          "*",
+          [messageChannel.port2]
         );
       };
 
