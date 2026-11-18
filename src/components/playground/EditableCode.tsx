@@ -1,9 +1,5 @@
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Check,
@@ -48,6 +44,9 @@ type ExecutionStatus =
 
 const EXECUTION_TIMEOUT = 3000;
 
+// Temporary safeguard while secure execution is implemented.
+const CODE_EXECUTION_ENABLED = false;
+
 export function EditableCode({
   code,
   onChange,
@@ -88,7 +87,16 @@ export function EditableCode({
   useEffect(() => {
     return () => {
       runIdRef.current += 1;
-      clearExecutionResources();
+
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
     };
   }, []);
 
@@ -117,6 +125,10 @@ export function EditableCode({
   }
 
   function runCode() {
+    if (!CODE_EXECUTION_ENABLED) {
+      return;
+    }
+
     runIdRef.current += 1;
     const runId = runIdRef.current;
 
@@ -199,6 +211,7 @@ export function EditableCode({
       clearExecutionResources();
 
       setStatus("error");
+
       setOutput([
         {
           level: "error",
@@ -256,8 +269,8 @@ export function EditableCode({
             </div>
 
             <p>
-              Edit and execute TypeScript using the
-              installed is-kit library.
+              Edit TypeScript using the installed
+              is-kit library.
             </p>
           </div>
 
@@ -309,8 +322,8 @@ export function EditableCode({
 
         <div className="code-execution-toolbar">
           <p className="editable-code-note">
-            Runs in a disposable worker. Only execute
-            code you trust.
+            Code execution is temporarily unavailable
+            while the secure sandbox is being implemented.
           </p>
 
           {running ? (
@@ -327,6 +340,12 @@ export function EditableCode({
               type="button"
               className="execution-button run"
               onClick={runCode}
+              disabled={!CODE_EXECUTION_ENABLED}
+              title={
+                CODE_EXECUTION_ENABLED
+                  ? "Run TypeScript"
+                  : "Code execution is temporarily disabled while the secure sandbox is being implemented."
+              }
             >
               <Play size={14} />
               Run Code
@@ -364,7 +383,7 @@ export function EditableCode({
         >
           {status === "idle" && (
             <p className="execution-placeholder">
-              Press Run Code to execute your TypeScript.
+              Code execution is temporarily disabled.
             </p>
           )}
 
