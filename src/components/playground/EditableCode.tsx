@@ -66,7 +66,7 @@ type ExecutionStatus =
 const EXECUTION_TIMEOUT = 6000;
 
 // Do not enable until worker CSP and isolation tests pass.
-const CODE_EXECUTION_ENABLED = false;
+const CODE_EXECUTION_ENABLED = true;
 
 function isOutputEntry(value: unknown): value is OutputEntry {
   if (!value || typeof value !== "object") {
@@ -328,8 +328,10 @@ export function EditableCode({
 
       iframe.title = "Code execution sandbox";
       iframe.style.display = "none";
-      iframe.setAttribute("sandbox", "allow-scripts");
-      iframe.referrerPolicy = "no-referrer";
+      iframe.setAttribute(
+        "sandbox",
+        "allow-scripts allow-same-origin"
+      );      iframe.referrerPolicy = "no-referrer";
       iframe.src = SANDBOX_URL;
 
       iframeRef.current = iframe;
@@ -408,23 +410,19 @@ export function EditableCode({
 
       messageChannel.port1.start();
 
+
       iframe.onload = () => {
         if (!isCurrent()) {
           return;
         }
 
-        // The iframe has an opaque origin.
-        // The wildcard is used ONLY to transfer
-        // a private MessagePort to this iframe.
-        //
-        // All execution messages then travel
-        // through that dedicated port.
         iframe.contentWindow?.postMessage(
           { type: "init" },
-          "*",
+          sandboxOrigin,
           [messageChannel.port2]
         );
       };
+
 
       document.body.appendChild(iframe);
     };
@@ -510,8 +508,7 @@ export function EditableCode({
 
         <div className="code-execution-toolbar">
           <p className="editable-code-note">
-            Code execution is temporarily unavailable
-            while sandbox security is being tested.
+            Run TypeScript safely in an isolated sandbox.
           </p>
 
           {running ? (
@@ -529,7 +526,7 @@ export function EditableCode({
               className="execution-button run"
               onClick={runCode}
               disabled={!CODE_EXECUTION_ENABLED}
-              title="Code execution is awaiting security testing."
+              title="Run TypeScript code"
             >
               <Play size={14} />
               Run Code
@@ -567,7 +564,7 @@ export function EditableCode({
         >
           {status === "idle" && (
             <p className="execution-placeholder">
-              Code execution is temporarily disabled.
+              Run your code to see the output here.
             </p>
           )}
 

@@ -75,7 +75,10 @@ function isValidId(value: unknown): value is string {
 function isChannelMessage(
   value: unknown
 ): value is ChannelMessage {
-  if (!value || typeof value !== "object") {
+  if (
+    typeof value !== "object" ||
+    value === null
+  ) {
     return false;
   }
 
@@ -107,15 +110,22 @@ function execute(id: string, javascript: string): void {
       new URL("./execution.worker.ts", import.meta.url),
       { type: "module" }
     );
-  } catch {
+
+    } catch (error) {
+    const message =
+        error instanceof Error
+        ? `${error.name}: ${error.message}`
+        : String(error);
+
     send({
-      type: "error",
-      id,
-      message: "Unable to create execution worker.",
-      output: [],
+        type: "error",
+        id,
+        message: `Unable to create execution worker: ${message}`,
+        output: [],
     });
+
     return;
-  }
+    }
 
   activeWorker = worker;
   activeId = id;
@@ -123,7 +133,10 @@ function execute(id: string, javascript: string): void {
   worker.onmessage = (
     event: MessageEvent<WorkerResponse>
   ) => {
-    if (activeWorker !== worker || activeId !== id) {
+    if (
+      activeWorker !== worker ||
+      activeId !== id
+    ) {
       return;
     }
 
@@ -151,7 +164,10 @@ function execute(id: string, javascript: string): void {
   };
 
   worker.onerror = () => {
-    if (activeWorker !== worker || activeId !== id) {
+    if (
+      activeWorker !== worker ||
+      activeId !== id
+    ) {
       return;
     }
 
@@ -166,7 +182,10 @@ function execute(id: string, javascript: string): void {
   };
 
   activeTimeout = setTimeout(() => {
-    if (activeWorker !== worker || activeId !== id) {
+    if (
+      activeWorker !== worker ||
+      activeId !== id
+    ) {
       return;
     }
 
@@ -175,7 +194,8 @@ function execute(id: string, javascript: string): void {
     send({
       type: "error",
       id,
-      message: "Execution exceeded the 3-second limit.",
+      message:
+        "Execution exceeded the 3-second limit.",
       output: [],
     });
   }, EXECUTION_TIMEOUT);
@@ -224,15 +244,24 @@ window.addEventListener(
       return;
     }
 
+    // Validate the message before reading its properties.
     if (
-      !event.data ||
       typeof event.data !== "object" ||
-      event.data.type !== "init"
+      event.data === null
     ) {
       return;
     }
 
-    // Only accept one initialization per iframe.
+    const message = event.data as Record<
+      string,
+      unknown
+    >;
+
+    if (message.type !== "init") {
+      return;
+    }
+
+    // Accept only one initialization per iframe.
     if (channel !== null) {
       return;
     }
@@ -253,6 +282,7 @@ window.addEventListener(
 
 window.addEventListener("pagehide", () => {
   cleanupExecution();
+
   channel?.close();
   channel = null;
 });
