@@ -11,6 +11,11 @@ import {
   Terminal,
 } from "lucide-react";
 
+import {
+  getSandboxOrigin,
+  SANDBOX_URL,
+} from "../../lib/sandbox-config";
+
 import "./EditableCode.css";
 
 type EditableCodeProps = {
@@ -24,16 +29,32 @@ type OutputEntry = {
   text: string;
 };
 
-type WorkerResponse =
+type CompileResponse =
   | {
-      type: "complete";
-      output: OutputEntry[];
+      type: "compiled";
+      javascript: string;
+      diagnostics: string[];
     }
   | {
       type: "error";
       message: string;
-      output: OutputEntry[];
+      diagnostics: string[];
     };
+
+type SandboxResponse =
+  | { type: "ready" }
+  | {
+      type: "complete";
+      id: string;
+      output: OutputEntry[];
+    }
+  | {
+      type: "error";
+      id: string;
+      message: string;
+      output: OutputEntry[];
+    }
+  | { type: "stopped"; id: string };
 
 type ExecutionStatus =
   | "idle"
@@ -42,10 +63,70 @@ type ExecutionStatus =
   | "error"
   | "stopped";
 
-const EXECUTION_TIMEOUT = 3000;
+const EXECUTION_TIMEOUT = 6000;
 
-// Temporary safeguard while secure execution is implemented.
+// Keep disabled until security testing is complete.
 const CODE_EXECUTION_ENABLED = false;
+
+function isOutputEntry(
+  value: unknown
+): value is OutputEntry {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const entry = value as Record<string, unknown>;
+
+  return (
+    (entry.level === "log" ||
+      entry.level === "warn" ||
+      entry.level === "error") &&
+    typeof entry.text === "string" &&
+    entry.text.length <= 4000
+  );
+}
+
+function isSandboxResponse(
+  value: unknown
+): value is SandboxResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const data = value as Record<string, unknown>;
+
+  if (data.type === "ready") return true;
+
+  if (
+    typeof data.id !== "string" ||
+    data.id.length > 128
+  ) {
+    return false;
+  }
+
+  if (data.type === "stopped") return true;
+
+  if (
+    data.type !== "complete" &&
+    data.type !== "error"
+  ) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(data.output) ||
+    data.output.length > 100 ||
+    !data.output.every(isOutputEntry)
+  ) {
+    return false;
+  }
+
+  return (
+    data.type === "complete" ||
+    (typeof data.message === "string" &&
+      data.message.length <= 4000)
+  );
+}
 
 export function EditableCode({
   code,
@@ -61,7 +142,10 @@ export function EditableCode({
   const [output, setOutput] =
     useState<OutputEntry[]>([]);
 
-  const workerRef = useRef<Worker | null>(null);
+  const compilerRef = useRef<Worker | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(
+    null
+  );
 
   const timeoutRef = useRef<
     ReturnType<typeof setTimeout> | null
@@ -72,31 +156,23 @@ export function EditableCode({
   const copied = copiedCode === code;
   const running = status === "running";
 
-  function clearExecutionResources() {
+  function cleanup() {
     if (timeoutRef.current !== null) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
 
-    if (workerRef.current) {
-      workerRef.current.terminate();
-      workerRef.current = null;
-    }
+    compilerRef.current?.terminate();
+    compilerRef.current = null;
+
+    iframeRef.current?.remove();
+    iframeRef.current = null;
   }
 
   useEffect(() => {
     return () => {
       runIdRef.current += 1;
-
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
+      cleanup();
     };
   }, []);
 
@@ -109,14 +185,18 @@ export function EditableCode({
     }
   }
 
+  function fail(message: string) {
+    cleanup();
+    setStatus("error");
+    setOutput([{ level: "error", text: message }]);
+  }
+
   function stopExecution() {
     runIdRef.current += 1;
-    clearExecutionResources();
+    cleanup();
 
     setStatus("stopped");
-
-    setOutput((current) => [
-      ...current,
+    setOutput([
       {
         level: "warn",
         text: "Execution stopped.",
@@ -125,124 +205,188 @@ export function EditableCode({
   }
 
   function runCode() {
-    if (!CODE_EXECUTION_ENABLED) {
+    if (!CODE_EXECUTION_ENABLED || running) return;
+
+    const sandboxOrigin = getSandboxOrigin();
+
+    if (!sandboxOrigin) {
+      fail("Sandbox URL is not configured.");
       return;
     }
 
     runIdRef.current += 1;
     const runId = runIdRef.current;
+    const requestId = crypto.randomUUID();
 
-    clearExecutionResources();
-
+    cleanup();
     setStatus("running");
     setOutput([]);
 
-    let worker: Worker;
+    const isCurrent = () =>
+      runId === runIdRef.current;
+
+    timeoutRef.current = setTimeout(() => {
+      if (!isCurrent()) return;
+
+      runIdRef.current += 1;
+      fail("Execution timed out.");
+    }, EXECUTION_TIMEOUT);
+
+    let compiler: Worker;
 
     try {
-      worker = new Worker(
+      compiler = new Worker(
         new URL(
           "../../workers/typescript-runner.worker.ts",
           import.meta.url
         ),
-        {
-          type: "module",
-        }
+        { type: "module" }
       );
-    } catch (error) {
-      setStatus("error");
-      setOutput([
-        {
-          level: "error",
-          text:
-            error instanceof Error
-              ? error.message
-              : "Unable to start execution worker.",
-        },
-      ]);
+    } catch {
+      fail("Unable to start TypeScript compiler.");
       return;
     }
 
-    workerRef.current = worker;
+    compilerRef.current = compiler;
 
-    worker.onmessage = (
-      event: MessageEvent<WorkerResponse>
+    compiler.onerror = () => {
+      if (isCurrent()) {
+        fail("TypeScript compiler failed.");
+      }
+    };
+
+    compiler.onmessage = (
+      event: MessageEvent<CompileResponse>
     ) => {
-      if (runId !== runIdRef.current) {
+      if (!isCurrent()) return;
+
+      compiler.terminate();
+      compilerRef.current = null;
+
+      const result = event.data;
+
+      if (
+        !result ||
+        (result.type !== "compiled" &&
+          result.type !== "error")
+      ) {
+        fail("Invalid compiler response.");
         return;
       }
 
-      clearExecutionResources();
-
-      const response = event.data;
-
-      if (response.type === "complete") {
-        setStatus("success");
-
-        setOutput(
-          response.output.length > 0
-            ? response.output
-            : [
-                {
-                  level: "log",
-                  text:
-                    "Execution completed. No console output.",
-                },
-              ]
+      if (result.type === "error") {
+        fail(
+          [
+            result.message,
+            ...result.diagnostics,
+          ].join("\n")
         );
-      } else {
-        setStatus("error");
-
-        setOutput([
-          ...response.output,
-          {
-            level: "error",
-            text: response.message,
-          },
-        ]);
-      }
-    };
-
-    worker.onerror = (event) => {
-      if (runId !== runIdRef.current) {
         return;
       }
 
-      clearExecutionResources();
+      const iframe = document.createElement("iframe");
 
-      setStatus("error");
+      iframe.title = "Code execution sandbox";
+      iframe.style.display = "none";
+      iframe.setAttribute("sandbox", "allow-scripts");
+      iframe.referrerPolicy = "no-referrer";
+      iframe.src = SANDBOX_URL;
 
-      setOutput([
-        {
-          level: "error",
-          text:
-            event.message ||
-            "An execution worker error occurred.",
-        },
-      ]);
+      iframeRef.current = iframe;
+
+      const onMessage = (
+        messageEvent: MessageEvent<unknown>
+      ) => {
+        if (!isCurrent()) return;
+
+        if (
+          messageEvent.source !== iframe.contentWindow
+        ) {
+          return;
+        }
+
+        // An iframe without allow-same-origin sends
+        // messages with the opaque origin "null".
+        if (messageEvent.origin !== "null") {
+          return;
+        }
+
+        if (!isSandboxResponse(messageEvent.data)) {
+          return;
+        }
+
+        const response = messageEvent.data;
+
+        if (response.type === "ready") {
+          iframe.contentWindow?.postMessage(
+            {
+              type: "execute",
+              id: requestId,
+              javascript: result.javascript,
+            },
+            sandboxOrigin
+          );
+          return;
+        }
+
+        if (response.id !== requestId) return;
+
+        window.removeEventListener(
+          "message",
+          onMessage
+        );
+
+        if (response.type === "stopped") {
+          stopExecution();
+          return;
+        }
+
+        cleanup();
+
+        if (response.type === "complete") {
+          setStatus("success");
+          setOutput(
+            response.output.length
+              ? response.output
+              : [
+                  {
+                    level: "log",
+                    text:
+                      "Execution completed. No console output.",
+                  },
+                ]
+          );
+        } else {
+          setStatus("error");
+          setOutput([
+            ...response.output,
+            {
+              level: "error",
+              text: response.message,
+            },
+          ]);
+        }
+      };
+
+      window.addEventListener(
+        "message",
+        onMessage
+      );
+
+      iframe.onload = () => {
+        if (!isCurrent()) return;
+
+        iframe.contentWindow?.postMessage(
+          { type: "init" },
+          sandboxOrigin
+        );
+      };
+
+      document.body.appendChild(iframe);
     };
 
-    timeoutRef.current = setTimeout(() => {
-      if (runId !== runIdRef.current) {
-        return;
-      }
-
-      runIdRef.current += 1;
-      clearExecutionResources();
-
-      setStatus("error");
-
-      setOutput([
-        {
-          level: "error",
-          text:
-            "Execution exceeded the 3-second limit and was stopped.",
-        },
-      ]);
-    }, EXECUTION_TIMEOUT);
-
-    worker.postMessage({
-      type: "run",
+    compiler.postMessage({
+      type: "compile",
       code,
     });
   }
@@ -250,7 +394,7 @@ export function EditableCode({
   function handleReset() {
     if (running) {
       runIdRef.current += 1;
-      clearExecutionResources();
+      cleanup();
     }
 
     onReset();
@@ -323,7 +467,7 @@ export function EditableCode({
         <div className="code-execution-toolbar">
           <p className="editable-code-note">
             Code execution is temporarily unavailable
-            while the secure sandbox is being implemented.
+            while sandbox security is being tested.
           </p>
 
           {running ? (
@@ -341,11 +485,7 @@ export function EditableCode({
               className="execution-button run"
               onClick={runCode}
               disabled={!CODE_EXECUTION_ENABLED}
-              title={
-                CODE_EXECUTION_ENABLED
-                  ? "Run TypeScript"
-                  : "Code execution is temporarily disabled while the secure sandbox is being implemented."
-              }
+              title="Code execution is awaiting security testing."
             >
               <Play size={14} />
               Run Code
