@@ -1,0 +1,169 @@
+
+.code-mode-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.code-execution-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.code-execution-toolbar .editable-code-note {
+  margin: 0;
+  flex: 1;
+  min-width: 180px;
+}
+
+.execution-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.execution-button.run {
+  background: var(--green);
+  color: #172016;
+}
+
+.execution-button.run:hover {
+  background: #b9e58b;
+}
+
+.execution-button.stop {
+  background: #3b2927;
+  color: #f5a5a5;
+  border-color: #754641;
+}
+
+.execution-button.stop:hover {
+  background: #4a302e;
+}
+
+.execution-output-panel {
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.execution-output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.execution-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+}
+
+.execution-status-success {
+  color: var(--green);
+}
+
+.execution-status-error {
+  color: #f2a5a5;
+}
+
+.execution-status-running {
+  color: #f2d48a;
+}
+
+.execution-status-stopped {
+  color: var(--muted);
+}
+
+.execution-console {
+  padding-top: 14px;
+  min-height: 60px;
+  min-width: 0;
+}
+
+.execution-placeholder {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.execution-line {
+  margin: 0 0 9px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #171c18;
+  color: #c8e4bc;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.execution-line-warn {
+  color: #f2d48a;
+}
+
+.execution-line-error {
+  color: #f2a5a5;
+}
+
+@media (max-width: 600px) {
+  .code-execution-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .execution-button {
+    width: 100%;
+  }
+}
+
+
+/* Phase 3.3: execution diagnostics */
+
+.execution-line-error {
+  color: #f2a5a5;
+  background: rgba(205, 76, 76, 0.08);
+  border-left: 2px solid #c75a5a;
+}
+
+.execution-line-warn {
+  color: #f2d48a;
+  background: rgba(215, 168, 69, 0.06);
+  border-left: 2px solid #b99b51;
+}
+
+.execution-line-log {
+  border-left: 2px solid rgba(164, 207, 134, 0.35);
+}
+
+.execution-console {
+  font-family:
+    "Cascadia Code",
+    "Consolas",
+    monospace;
+}
+
+.execution-line {
+  font-family: inherit;
+  tab-size: 2;
+}

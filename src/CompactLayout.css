@@ -1,0 +1,903 @@
+
+/* ==========================================
+   IS-KIT PLAYGROUND
+   Compact Desktop Layout
+   ========================================== */
+
+/* ------------------------------------------
+   App shell
+------------------------------------------ */
+
+.app-shell {
+  min-height: 100dvh;
+}
+
+.topbar {
+  height: 56px;
+  padding: 0 22px;
+}
+
+.brand {
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.brand-name strong {
+  font-size: 17px;
+}
+
+.topbar-right {
+  gap: 18px;
+}
+
+/* ------------------------------------------
+   Main layout
+------------------------------------------ */
+
+.app-layout {
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: calc(100dvh - 56px);
+}
+
+.sidebar {
+  min-width: 0;
+  padding: 18px 10px 14px;
+}
+
+.sidebar-heading {
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.sidebar-tool {
+  gap: 9px;
+  padding: 10px 11px;
+  font-size: 12px;
+}
+
+.sidebar-tool.sidebar-active {
+  margin-top: 8px;
+}
+
+.examples-heading {
+  margin-top: 23px;
+  margin-bottom: 9px;
+}
+
+.examples-list {
+  gap: 2px;
+}
+
+.example-button {
+  padding: 9px 11px;
+  font-size: 12px;
+}
+
+.sidebar-bottom {
+  padding-top: 12px;
+}
+
+.sidebar-note {
+  padding: 10px;
+}
+
+.sidebar-note p {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.library-credit {
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+/* ------------------------------------------
+   Workspace heading
+------------------------------------------ */
+
+.workspace {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 20px;
+}
+
+.workspace-heading {
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.eyebrow {
+  margin-bottom: 4px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+
+.workspace-heading h1 {
+  margin-bottom: 3px;
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+
+.workspace-heading p {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.reset-button {
+  padding: 8px 11px;
+}
+
+/* ------------------------------------------
+   Mode tabs
+------------------------------------------ */
+
+.mode-tabs {
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.mode-tab {
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.mode-tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ------------------------------------------
+   Shared panels
+------------------------------------------ */
+
+.panel {
+  border-radius: 9px;
+}
+
+.composer-panel {
+  padding: 13px 15px;
+}
+
+.panel-label {
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+}
+
+.panel-label svg {
+  width: 14px;
+  height: 14px;
+}
+
+.panel-header p,
+.panel-subtitle {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.panel-index {
+  font-size: 9px;
+}
+
+/* ------------------------------------------
+   Guard Composer
+------------------------------------------ */
+
+.operator-section {
+  margin-top: 12px;
+}
+
+.field-heading {
+  gap: 7px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.field-hint {
+  font-size: 10px;
+}
+
+.operator-options {
+  gap: 7px;
+}
+
+.operator-button {
+  min-width: 83px;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.operator-symbol {
+  font-size: 13px;
+}
+
+.operator-description {
+  margin-top: 7px;
+  font-size: 10px;
+}
+
+.guard-section {
+  margin-top: 13px;
+}
+
+.guard-stack {
+  gap: 6px;
+}
+
+.guard-row {
+  gap: 9px;
+  padding: 6px 9px;
+}
+
+.guard-select-wrap {
+  min-width: 150px;
+  padding: 7px 9px;
+}
+
+.guard-description {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.icon-button {
+  width: 28px;
+  height: 28px;
+}
+
+.add-guard-area {
+  margin-top: 8px;
+}
+
+.add-guard-button {
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+.picker-results {
+  max-height: 210px;
+}
+
+/* ------------------------------------------
+   Object Shape Builder
+------------------------------------------ */
+
+.shape-field-list {
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.shape-field-row {
+  gap: 9px;
+}
+
+.shape-key-input {
+  width: 140px;
+  min-height: 35px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.shape-optional {
+  font-size: 11px;
+}
+
+.shape-options {
+  margin-top: 11px;
+  padding-top: 10px;
+}
+
+.shape-exact-option {
+  gap: 9px;
+}
+
+.shape-exact-option strong {
+  font-size: 11px;
+}
+
+.shape-exact-option small {
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.shape-error {
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+/* ------------------------------------------
+   Test Input + Generated Code
+------------------------------------------ */
+
+.workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  margin-top: 12px;
+}
+
+.workbench-grid > .panel {
+  min-width: 0;
+  margin: 0;
+}
+
+.input-panel,
+.code-panel {
+  padding: 13px;
+}
+
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.code-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.input-panel > .panel-subtitle {
+  margin-bottom: 0;
+}
+
+.parsing-mode-section {
+  margin: 10px 0;
+}
+
+.parsing-mode-heading {
+  margin-bottom: 6px;
+  font-size: 10px;
+}
+
+.parsing-mode-options {
+  gap: 6px;
+}
+
+.parsing-mode-button {
+  gap: 3px;
+  padding: 8px;
+}
+
+.parsing-mode-button strong {
+  font-size: 11px;
+}
+
+.parsing-mode-button small {
+  font-size: 9px;
+}
+
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 8px;
+}
+
+.editor-topline {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
+.json-editor {
+  min-height: 85px;
+  padding: 10px 12px;
+  resize: none;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.quick-values {
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.quick-values button {
+  padding: 5px 7px;
+  font-size: 10px;
+}
+
+.code-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+}
+
+.code-editor pre {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.copy-button {
+  gap: 6px;
+  padding: 6px 9px;
+  font-size: 10px;
+}
+
+/* ------------------------------------------
+   Compact Validation Result
+------------------------------------------ */
+
+.compact-result {
+  margin-top: 12px;
+  padding: 12px 14px;
+}
+
+.compact-result-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.compact-result-identity {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.compact-result-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.compact-result-status.pass {
+  color: var(--green-strong);
+  border-color: #50723d;
+  background: #293d26;
+}
+
+.compact-result-status.fail {
+  color: var(--red);
+  border-color: #70443d;
+  background: #372624;
+}
+
+.compact-result-status.invalid {
+  color: var(--yellow);
+  border-color: #74603d;
+  background: #383122;
+}
+
+.compact-result-explanation {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.compact-result-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.compact-result-mode {
+  color: var(--subtle);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.compact-result-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--green);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.compact-result-toggle:hover {
+  border-color: var(--green-muted);
+}
+
+.compact-result-expanded {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.compact-result-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.compact-result-detail {
+  min-width: 0;
+}
+
+.compact-result-detail .detail-label {
+  margin-top: 0;
+  margin-bottom: 7px;
+}
+
+.compact-result-detail .detail-label:not(:first-child) {
+  margin-top: 12px;
+}
+
+.compact-result-detail p {
+  margin: 0 0 9px;
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.compact-result-detail pre {
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border-radius: 6px;
+  background: #171c18;
+  color: #b4d8ff;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.compact-result-detail .parsing-result-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.compact-result-detail .parsing-result-heading {
+  margin-bottom: 7px;
+}
+
+.compact-result-detail .parsing-result-code {
+  color: var(--green-strong);
+}
+
+.compact-result-detail .parsing-result-note {
+  margin-top: 7px;
+  font-size: 10px;
+}
+
+.compact-result-expanded .result-footer {
+  margin-top: 12px;
+  font-size: 10px;
+}
+
+/* ------------------------------------------
+   Footer
+------------------------------------------ */
+
+.workspace-footer {
+  margin-top: 10px;
+  font-size: 10px;
+}
+
+
+
+/* ------------------------------------------
+   Medium screens
+------------------------------------------ */
+
+@media (max-width: 1100px) {
+  .app-layout {
+    grid-template-columns: 185px minmax(0, 1fr);
+  }
+
+  .workspace {
+    padding: 14px;
+  }
+
+  .guard-description {
+    display: none;
+  }
+
+  .compact-result-main {
+    flex-wrap: wrap;
+  }
+
+  .compact-result-explanation {
+    flex-basis: 40%;
+  }
+
+  .compact-result-actions {
+    margin-left: auto;
+  }
+}
+
+/* ------------------------------------------
+   Tablet and mobile
+------------------------------------------ */
+
+@media (max-width: 800px) {
+  .app-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .app-layout {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .sidebar {
+    padding: 12px;
+  }
+
+  .sidebar-heading:first-child {
+    display: flex;
+    margin-bottom: 7px;
+  }
+
+  .sidebar-tool {
+    display: inline-flex;
+    width: auto;
+    margin-right: 6px;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-tool.sidebar-active {
+    margin-top: 0;
+  }
+
+  .workspace {
+    display: block;
+    padding: 16px 12px;
+    overflow: visible;
+  }
+
+  .workbench-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .workbench-grid > .panel {
+    height: auto;
+  }
+
+  .json-editor {
+    min-height: 110px;
+    resize: vertical;
+  }
+
+  .code-editor {
+    max-height: 270px;
+  }
+
+  .compact-result-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-footer {
+    display: flex;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    height: 56px;
+    padding: 0 12px;
+  }
+
+  .workspace-heading h1 {
+    font-size: 22px;
+  }
+
+  .composer-panel,
+  .input-panel,
+  .code-panel {
+    padding: 12px;
+  }
+
+  .compact-result {
+    padding: 12px;
+  }
+
+  .compact-result-main {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .compact-result-identity {
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .compact-result-explanation {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .compact-result-actions {
+    margin-left: 0;
+  }
+
+  .compact-result-mode {
+    display: none;
+  }
+
+  .parsing-mode-options {
+    grid-template-columns: 1fr;
+  }
+
+  .parsing-mode-button {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .shape-field-row {
+    flex-wrap: wrap;
+  }
+
+  .shape-guard-select {
+    flex-basis: 100%;
+  }
+}
+
+
+
+/* ==========================================
+   NATURAL PAGE SCROLLING
+   No internal panel scrollbars
+   ========================================== */
+
+.app-shell {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.app-layout {
+  height: auto;
+  min-height: calc(100dvh - 56px);
+  overflow: visible;
+}
+
+.workspace {
+  display: block;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Guard Composer and Object Shape Builder */
+
+.workspace > .composer-panel {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Keep dropdowns and popovers visible */
+
+.composer-panel {
+  overflow: visible;
+}
+
+/* Test Input + Generated Code */
+
+.workbench-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  height: auto;
+  min-height: 0;
+  margin-top: 12px;
+}
+
+.workbench-grid > .panel {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.input-panel,
+.code-panel {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+/* JSON input editor */
+
+.input-panel .editor-wrapper {
+  flex: none;
+  height: auto;
+  min-height: 0;
+}
+
+.json-editor,
+.input-panel .json-editor {
+  flex: none;
+  height: 120px;
+  min-height: 120px;
+  max-height: none;
+  resize: vertical;
+}
+
+/* Generated TypeScript */
+
+.code-editor {
+  display: block;
+  flex: none;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.code-editor pre {
+  display: block;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Validation result */
+
+.compact-result {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.compact-result-expanded {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.compact-result-detail pre,
+.compact-result-detail .parsing-result-code {
+  max-height: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Restore footer */
+
+.workspace-footer {
+  display: flex;
+}
+
+/* Responsive layout */
+
+@media (max-width: 800px) {
+  .workbench-grid {
+    grid-template-columns: 1fr;
+  }
+}

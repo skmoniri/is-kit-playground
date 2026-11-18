@@ -1,0 +1,85 @@
+
+/* Phase 3.1 — Editable TypeScript Mode */
+
+.mode-tab:not(.active):not(:disabled):hover {
+  border-color: var(--green-muted);
+  color: var(--text);
+}
+
+.editable-code-panel {
+  padding: 24px;
+}
+
+.editable-code-panel .panel-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.editable-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.editable-code-shell {
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #171c18;
+}
+
+.editable-typescript-input {
+  display: block;
+  width: 100%;
+  min-height: 420px;
+  padding: 20px;
+  resize: vertical;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #b4d8ff;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.editable-typescript-input:focus {
+  outline: none;
+}
+
+.editable-code-shell:focus-within {
+  border-color: var(--green-muted);
+}
+
+.editable-code-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .editable-code-panel {
+    padding: 17px;
+  }
+
+  .editable-code-panel .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editable-code-actions {
+    justify-content: flex-start;
+  }
+
+  .editable-typescript-input {
+    min-height: 340px;
+    padding: 14px;
+  }
+}

@@ -1,0 +1,29 @@
+
+.workspace-history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workspace-history-actions .reset-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.workspace-history-actions .reset-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .workspace-history-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}

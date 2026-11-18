@@ -1,0 +1,29 @@
+
+.share-workspace {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.share-workspace .copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-workspace-message {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .share-workspace {
+    align-items: flex-start;
+  }
+}
