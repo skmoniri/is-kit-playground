@@ -31,3 +31,4 @@ audit-report.json
 *.njsproj
 *.sln
 *.sw?
+dist-sandbox/
