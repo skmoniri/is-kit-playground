@@ -1,0 +1,8 @@
+
+{
+  "name": "is-kit-sandbox",
+  "compatibility_date": "2026-11-19",
+  "assets": {
+    "directory": "./dist-sandbox"
+  }
+}
