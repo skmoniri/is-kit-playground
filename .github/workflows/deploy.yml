@@ -38,7 +38,7 @@ jobs:
       - name: Build Vite application
         run: npm run build
         env:
-          VITE_SANDBOX_URL: https://is-kit-sandbox.skmoniri83.workers.dev
+          VITE_SANDBOX_URL: https://is-kit-sandbox.github.io
           VITE_BASE_PATH: /is-kit-playground/
 
       - name: Configure GitHub Pages
