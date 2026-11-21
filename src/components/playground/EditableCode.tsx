@@ -66,7 +66,7 @@ type ExecutionStatus =
 const EXECUTION_TIMEOUT = 6000;
 
 // Do not enable until worker CSP and isolation tests pass.
-const CODE_EXECUTION_ENABLED = false;
+const CODE_EXECUTION_ENABLED = true;
 
 function isOutputEntry(value: unknown): value is OutputEntry {
   if (!value || typeof value !== "object") {
