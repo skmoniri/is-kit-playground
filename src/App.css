@@ -170,17 +170,14 @@ textarea:focus-visible {
   letter-spacing: 1.4px;
 }
 
-.sidebar-active {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 13px;
+.sidebar-heading + .sidebar-tool {
   margin-top: 15px;
+}
+
+.sidebar-tool.sidebar-active {
   background: #2b3927;
-  border: 1px solid #435c35;
-  border-radius: 8px;
+  border-color: #435c35;
   color: var(--green-strong);
-  font-size: 13px;
   font-weight: 600;
 }
 
@@ -503,11 +500,10 @@ textarea:focus-visible {
 }
 
 .guard-select-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
   min-width: 165px;
-  padding: 9px 10px;
   border: 1px solid #45593a;
   border-radius: 6px;
   background: #2b3828;
@@ -517,13 +513,24 @@ textarea:focus-visible {
 .guard-select-wrap select {
   width: 100%;
   min-width: 0;
+  padding: 9px 33px 9px 35px;
   appearance: none;
   background: transparent;
   color: var(--text);
   border: none;
-  outline: none;
   font-size: 12px;
   cursor: pointer;
+}
+
+.guard-select-wrap > svg {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+}
+
+.guard-select-wrap > .select-chevron {
+  right: 10px;
+  left: auto;
 }
 
 .guard-select-wrap option {
@@ -1007,7 +1014,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 12px;
   width: 100%;
-  border: 0;
+  border: 1px solid transparent;
   background: transparent;
   color: inherit;
   font: inherit;

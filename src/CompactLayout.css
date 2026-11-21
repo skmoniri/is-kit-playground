@@ -59,7 +59,7 @@
   font-size: 12px;
 }
 
-.sidebar-tool.sidebar-active {
+.sidebar-heading + .sidebar-tool {
   margin-top: 8px;
 }
 
@@ -240,7 +240,10 @@
 
 .guard-select-wrap {
   min-width: 150px;
-  padding: 7px 9px;
+}
+
+.guard-select-wrap select {
+  padding: 7px 32px 7px 34px;
 }
 
 .guard-description {
@@ -664,7 +667,7 @@
     margin-bottom: 8px;
   }
 
-  .sidebar-tool.sidebar-active {
+  .sidebar-heading + .sidebar-tool {
     margin-top: 0;
   }
 
