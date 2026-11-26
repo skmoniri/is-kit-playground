@@ -1,10 +1,4 @@
-
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type HistoryState<T> = {
   entries: T[];
@@ -15,7 +9,7 @@ const MAX_HISTORY = 50;
 
 export function useWorkspaceHistory<T>(
   snapshot: T,
-  restore: (snapshot: T) => void
+  restore: (snapshot: T) => void,
 ) {
   const serialized = JSON.stringify(snapshot);
 
@@ -27,7 +21,17 @@ export function useWorkspaceHistory<T>(
   const currentRef = useRef(serialized);
   const restoreRef = useRef(restore);
 
-  const [, setVersion] = useState(0);
+  const [availability, setAvailability] = useState({
+    canUndo: false,
+    canRedo: false,
+  });
+
+  const syncAvailability = useCallback((history: HistoryState<T>) => {
+    setAvailability({
+      canUndo: history.index > 0,
+      canRedo: history.index < history.entries.length - 1,
+    });
+  }, []);
 
   useEffect(() => {
     restoreRef.current = restore;
@@ -51,13 +55,14 @@ export function useWorkspaceHistory<T>(
       nextEntries.shift();
     }
 
-    historyRef.current = {
+    const nextHistory: HistoryState<T> = {
       entries: nextEntries,
       index: nextEntries.length - 1,
     };
 
-    setVersion((value) => value + 1);
-  }, [serialized, snapshot]);
+    historyRef.current = nextHistory;
+    syncAvailability(nextHistory);
+  }, [serialized, snapshot, syncAvailability]);
 
   const undo = useCallback(() => {
     const history = historyRef.current;
@@ -69,16 +74,19 @@ export function useWorkspaceHistory<T>(
     const nextIndex = history.index - 1;
     const previous = history.entries[nextIndex];
 
-    historyRef.current = {
+    const nextHistory: HistoryState<T> = {
       ...history,
       index: nextIndex,
     };
 
+    historyRef.current = nextHistory;
+
     currentRef.current = JSON.stringify(previous);
+
     restoreRef.current(previous);
 
-    setVersion((value) => value + 1);
-  }, []);
+    syncAvailability(nextHistory);
+  }, [syncAvailability]);
 
   const redo = useCallback(() => {
     const history = historyRef.current;
@@ -90,23 +98,24 @@ export function useWorkspaceHistory<T>(
     const nextIndex = history.index + 1;
     const next = history.entries[nextIndex];
 
-    historyRef.current = {
+    const nextHistory: HistoryState<T> = {
       ...history,
       index: nextIndex,
     };
 
+    historyRef.current = nextHistory;
+
     currentRef.current = JSON.stringify(next);
+
     restoreRef.current(next);
 
-    setVersion((value) => value + 1);
-  }, []);
-
-  const history = historyRef.current;
+    syncAvailability(nextHistory);
+  }, [syncAvailability]);
 
   return {
     undo,
     redo,
-    canUndo: history.index > 0,
-    canRedo: history.index < history.entries.length - 1,
+    canUndo: availability.canUndo,
+    canRedo: availability.canRedo,
   };
 }

@@ -1,4 +1,3 @@
-
 import * as isKit from "is-kit";
 
 type OutputEntry = {
@@ -29,13 +28,8 @@ const MAX_JAVASCRIPT_LENGTH = 200_000;
 const MAX_OUTPUT_ENTRIES = 100;
 const MAX_OUTPUT_LENGTH = 4_000;
 
-function isExecuteRequest(
-  value: unknown
-): value is ExecuteRequest {
-  if (
-    typeof value !== "object" ||
-    value === null
-  ) {
+function isExecuteRequest(value: unknown): value is ExecuteRequest {
+  if (typeof value !== "object" || value === null) {
     return false;
   }
 
@@ -47,8 +41,7 @@ function isExecuteRequest(
     request.id.length > 0 &&
     request.id.length <= 128 &&
     typeof request.javascript === "string" &&
-    request.javascript.length <=
-      MAX_JAVASCRIPT_LENGTH
+    request.javascript.length <= MAX_JAVASCRIPT_LENGTH
   );
 }
 
@@ -74,39 +67,25 @@ function formatValue(value: unknown): string {
   }
 
   if (value instanceof Map) {
-    return `Map ${formatValue(
-      [...value.entries()]
-    )}`;
+    return `Map ${formatValue([...value.entries()])}`;
   }
 
   if (value instanceof Set) {
-    return `Set ${formatValue(
-      [...value.values()]
-    )}`;
+    return `Set ${formatValue([...value.values()])}`;
   }
 
   try {
-    return (
-      JSON.stringify(value, null, 2) ??
-      String(value)
-    );
+    return JSON.stringify(value, null, 2) ?? String(value);
   } catch {
     return String(value);
   }
 }
 
-function formatArguments(
-  args: unknown[]
-): string {
-  return args
-    .map(formatValue)
-    .join(" ")
-    .slice(0, MAX_OUTPUT_LENGTH);
+function formatArguments(args: unknown[]): string {
+  return args.map(formatValue).join(" ").slice(0, MAX_OUTPUT_LENGTH);
 }
 
-function getErrorMessage(
-  error: unknown
-): string {
+function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return `${error.name}: ${error.message}`;
   }
@@ -114,15 +93,12 @@ function getErrorMessage(
   return String(error);
 }
 
-function executeJavaScript(
-  request: ExecuteRequest
-): void {
+async function executeJavaScript(request: ExecuteRequest): Promise<void> {
   const output: OutputEntry[] = [];
 
-  function capture(
-    level: OutputEntry["level"],
-    args: unknown[]
-  ): void {
+  const pendingRequests = new Set<Promise<unknown>>();
+
+  function capture(level: OutputEntry["level"], args: unknown[]): void {
     if (output.length >= MAX_OUTPUT_ENTRIES) {
       return;
     }
@@ -134,61 +110,86 @@ function executeJavaScript(
   }
 
   const capturedConsole = {
-    log: (...args: unknown[]) =>
-      capture("log", args),
+    log: (...args: unknown[]) => capture("log", args),
 
-    info: (...args: unknown[]) =>
-      capture("log", args),
+    info: (...args: unknown[]) => capture("log", args),
 
-    warn: (...args: unknown[]) =>
-      capture("warn", args),
+    warn: (...args: unknown[]) => capture("warn", args),
 
-    error: (...args: unknown[]) =>
-      capture("error", args),
+    error: (...args: unknown[]) => capture("error", args),
   };
 
-  const allowedRequire = (
-    moduleName: string
-  ): typeof isKit => {
+  const allowedRequire = (moduleName: string): typeof isKit => {
     if (moduleName === "is-kit") {
       return isKit;
     }
 
     throw new Error(
       `Unsupported import "${moduleName}". ` +
-      'Only "is-kit" imports are supported.'
+        'Only "is-kit" imports are supported.',
     );
   };
 
-  try {
-    const exportsObject: Record<
-      string,
-      unknown
-    > = {};
+  const trackedFetch: typeof fetch = (input, init) => {
+    const requestPromise = fetch(input, init);
 
-    // IMPORTANT:
-    // This evaluates arbitrary JavaScript.
-    // It is safe to enable only after the
-    // separate sandbox origin, CSP, iframe
-    // isolation, and protocol are verified.
-    //
-    // This worker alone is NOT a sandbox.
-    const execute = new Function(
+    // Observe settlement without changing the
+    // original promise's success/failure behavior.
+    const tracked = requestPromise.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    pendingRequests.add(tracked);
+
+    void tracked.then(() => {
+      pendingRequests.delete(tracked);
+    });
+
+    return requestPromise;
+  };
+
+  try {
+    const exportsObject: Record<string, unknown> = {};
+
+    // Arbitrary JavaScript runs here.
+    // This worker is NOT a security boundary
+    // by itself. Isolation depends on the
+    // separate sandbox origin and CSP.
+    const AsyncFunction = Object.getPrototypeOf(async function () {})
+      .constructor as new (
+      ...args: string[]
+    ) => (
+      exports: Record<string, unknown>,
+      requireModule: typeof allowedRequire,
+      logger: typeof capturedConsole,
+      fetchFunction: typeof fetch,
+    ) => Promise<unknown>;
+
+    const execute = new AsyncFunction(
       "exports",
       "require",
       "console",
-      request.javascript
-    ) as (
-      exports: Record<string, unknown>,
-      requireModule: typeof allowedRequire,
-      logger: typeof capturedConsole
-    ) => void;
-
-    execute(
-      exportsObject,
-      allowedRequire,
-      capturedConsole
+      "fetch",
+      request.javascript,
     );
+
+    await execute(exportsObject, allowedRequire, capturedConsole, trackedFetch);
+
+    // Allow promise callbacks to run.
+    await Promise.resolve();
+
+    // Wait for fetch calls made through the
+    // injected fetch function, even if the
+    // user's code did not await them.
+    //
+    // The parent runner's timeout remains
+    // responsible for terminating this worker.
+    while (pendingRequests.size > 0) {
+      await Promise.allSettled([...pendingRequests]);
+
+      await Promise.resolve();
+    }
 
     const response: ExecutionResponse = {
       type: "complete",
@@ -209,14 +210,12 @@ function executeJavaScript(
   }
 }
 
-self.onmessage = (
-  event: MessageEvent<unknown>
-) => {
+self.onmessage = (event: MessageEvent<unknown>) => {
   if (!isExecuteRequest(event.data)) {
     return;
   }
 
-  executeJavaScript(event.data);
+  void executeJavaScript(event.data);
 };
 
 export {};
