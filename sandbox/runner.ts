@@ -1,5 +1,6 @@
-
 /// <reference types="vite/client" />
+
+import ExecutionWorker from "./execution.worker.ts?worker&inline";
 
 type OutputEntry = {
   level: "log" | "warn" | "error";
@@ -36,8 +37,7 @@ const MAX_JAVASCRIPT_LENGTH = 200_000;
 const configuredOrigin = import.meta.env.VITE_PARENT_ORIGIN;
 
 const ALLOWED_PARENT_ORIGIN =
-  typeof configuredOrigin === "string" &&
-  configuredOrigin.length > 0
+  typeof configuredOrigin === "string" && configuredOrigin.length > 0
     ? configuredOrigin
     : "http://127.0.0.1:3000";
 
@@ -65,20 +65,11 @@ function cleanupExecution(): void {
 }
 
 function isValidId(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 128
-  );
+  return typeof value === "string" && value.length > 0 && value.length <= 128;
 }
 
-function isChannelMessage(
-  value: unknown
-): value is ChannelMessage {
-  if (
-    typeof value !== "object" ||
-    value === null
-  ) {
+function isChannelMessage(value: unknown): value is ChannelMessage {
+  if (typeof value !== "object" || value === null) {
     return false;
   }
 
@@ -92,8 +83,7 @@ function isChannelMessage(
     return (
       isValidId(message.id) &&
       typeof message.javascript === "string" &&
-      message.javascript.length <=
-        MAX_JAVASCRIPT_LENGTH
+      message.javascript.length <= MAX_JAVASCRIPT_LENGTH
     );
   }
 
@@ -106,37 +96,28 @@ function execute(id: string, javascript: string): void {
   let worker: Worker;
 
   try {
-    worker = new Worker(
-      new URL("./execution.worker.ts", import.meta.url),
-      { type: "module" }
-    );
-
-    } catch (error) {
+    worker = new ExecutionWorker();
+  } catch (error) {
     const message =
-        error instanceof Error
+      error instanceof Error
         ? `${error.name}: ${error.message}`
         : String(error);
 
     send({
-        type: "error",
-        id,
-        message: `Unable to create execution worker: ${message}`,
-        output: [],
+      type: "error",
+      id,
+      message: `Unable to create execution worker: ${message}`,
+      output: [],
     });
 
     return;
-    }
+  }
 
   activeWorker = worker;
   activeId = id;
 
-  worker.onmessage = (
-    event: MessageEvent<WorkerResponse>
-  ) => {
-    if (
-      activeWorker !== worker ||
-      activeId !== id
-    ) {
+  worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+    if (activeWorker !== worker || activeId !== id) {
       return;
     }
 
@@ -145,8 +126,7 @@ function execute(id: string, javascript: string): void {
     if (
       !response ||
       response.id !== id ||
-      (response.type !== "complete" &&
-        response.type !== "error")
+      (response.type !== "complete" && response.type !== "error")
     ) {
       return;
     }
@@ -157,17 +137,12 @@ function execute(id: string, javascript: string): void {
       type: response.type,
       id,
       output: response.output,
-      ...(response.type === "error"
-        ? { message: response.message }
-        : {}),
+      ...(response.type === "error" ? { message: response.message } : {}),
     });
   };
 
   worker.onerror = () => {
-    if (
-      activeWorker !== worker ||
-      activeId !== id
-    ) {
+    if (activeWorker !== worker || activeId !== id) {
       return;
     }
 
@@ -182,10 +157,7 @@ function execute(id: string, javascript: string): void {
   };
 
   activeTimeout = setTimeout(() => {
-    if (
-      activeWorker !== worker ||
-      activeId !== id
-    ) {
+    if (activeWorker !== worker || activeId !== id) {
       return;
     }
 
@@ -194,8 +166,7 @@ function execute(id: string, javascript: string): void {
     send({
       type: "error",
       id,
-      message:
-        "Execution exceeded the 3-second limit.",
+      message: "Execution exceeded the 3-second limit.",
       output: [],
     });
   }, EXECUTION_TIMEOUT);
@@ -207,9 +178,7 @@ function execute(id: string, javascript: string): void {
   });
 }
 
-function handleChannelMessage(
-  event: MessageEvent<unknown>
-): void {
+function handleChannelMessage(event: MessageEvent<unknown>): void {
   if (!isChannelMessage(event.data)) {
     return;
   }
@@ -234,51 +203,40 @@ function handleChannelMessage(
   execute(message.id, message.javascript);
 }
 
-window.addEventListener(
-  "message",
-  (event: MessageEvent<unknown>) => {
-    if (
-      event.source !== window.parent ||
-      event.origin !== ALLOWED_PARENT_ORIGIN
-    ) {
-      return;
-    }
-
-    // Validate the message before reading its properties.
-    if (
-      typeof event.data !== "object" ||
-      event.data === null
-    ) {
-      return;
-    }
-
-    const message = event.data as Record<
-      string,
-      unknown
-    >;
-
-    if (message.type !== "init") {
-      return;
-    }
-
-    // Accept only one initialization per iframe.
-    if (channel !== null) {
-      return;
-    }
-
-    const transferredPort = event.ports[0];
-
-    if (!transferredPort) {
-      return;
-    }
-
-    channel = transferredPort;
-    channel.onmessage = handleChannelMessage;
-    channel.start();
-
-    send({ type: "ready" });
+window.addEventListener("message", (event: MessageEvent<unknown>) => {
+  if (
+    event.source !== window.parent ||
+    event.origin !== ALLOWED_PARENT_ORIGIN
+  ) {
+    return;
   }
-);
+
+  if (typeof event.data !== "object" || event.data === null) {
+    return;
+  }
+
+  const message = event.data as Record<string, unknown>;
+
+  if (message.type !== "init") {
+    return;
+  }
+
+  if (channel !== null) {
+    return;
+  }
+
+  const transferredPort = event.ports[0];
+
+  if (!transferredPort) {
+    return;
+  }
+
+  channel = transferredPort;
+  channel.onmessage = handleChannelMessage;
+  channel.start();
+
+  send({ type: "ready" });
+});
 
 window.addEventListener("pagehide", () => {
   cleanupExecution();

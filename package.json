@@ -1,14 +1,17 @@
-
 {
   "name": "is-kit-playground",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate:typecheck": "node scripts/generate-typecheck-libs.mjs",
+    "predev": "npm run generate:typecheck",
     "dev": "vite",
+    "prebuild": "npm run generate:typecheck",
     "build": "tsc -b && vite build",
     "build:sandbox": "vite build --config sandbox/vite.config.ts",
     "lint": "eslint .",
+    "test": "node --test scripts/test-typecheck.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

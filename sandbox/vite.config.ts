@@ -1,10 +1,9 @@
-
 import { defineConfig } from "vite";
 
 const contentSecurityPolicy = [
   "default-src 'none'",
   "script-src 'self' 'unsafe-eval'",
-  "worker-src 'self'",
+  "worker-src 'self' blob:",
   "connect-src 'none'",
   "img-src 'none'",
   "style-src 'none'",

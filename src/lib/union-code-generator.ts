@@ -1,14 +1,13 @@
-
 import type { UnionConfig } from "../types/union";
 import type { ParsingMode } from "./safe-parsing";
 
 export function generateUnionCode(
   config: UnionConfig,
   input: string,
-  mode: ParsingMode
+  mode: ParsingMode,
 ): string {
   const imports = new Set<string>();
-  let definition = "";
+  let definition: string;
 
   if (config.kind === "guards") {
     imports.add("oneOf");
@@ -87,8 +86,7 @@ const guard = discriminatedUnion<Message>()(
     imports.add("safeJsonParse");
   }
 
-  const importStatement =
-    `import { ${[...imports].join(", ")} } from "is-kit";`;
+  const importStatement = `import { ${[...imports].join(", ")} } from "is-kit";`;
 
   const serializedInput = JSON.stringify(input);
 
