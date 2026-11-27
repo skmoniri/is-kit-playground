@@ -170,3 +170,28 @@ Built as an independent companion to [is-kit](https://github.com/necoz-oss/is-ki
 
 ---
 **Independent alpha project. Not an official is-kit or Necoz release.**
+
+## Testing
+
+The project uses Playwright for automated browser testing.
+
+```bash
+npm run lint
+npm run build
+npm audit --omit=dev
+npx playwright test
+```
+
+The Playwright configuration uses an installed Google Chrome browser.
+
+The automated tests cover:
+
+- Sandbox origin isolation and CSP restrictions
+- Worker execution, timeouts, and recovery
+- Guard Composer and visual explorers
+- Validation and generated TypeScript
+- Undo, redo, and workspace controls
+- Shareable URL restoration
+- Basic mobile and tablet responsiveness
+
+These tests do not constitute a comprehensive security or accessibility audit.

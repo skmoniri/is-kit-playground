@@ -32,3 +32,10 @@ audit-report.json
 *.sln
 *.sw?
 dist-sandbox/
+
+# Playwright generated files
+/test-results/
+/playwright-report/
+
+# Temporary UI discovery output
+/ui-elements.txt
