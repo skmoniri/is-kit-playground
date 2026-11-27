@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const URL = "http://127.0.0.1:5174/is-kit-playground/";
+const URL = "https://skmoniri.github.io/is-kit-playground/";
 
 const workspaces = [
   "Guard Composer",
