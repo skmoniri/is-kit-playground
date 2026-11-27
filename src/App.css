@@ -499,6 +499,12 @@ textarea:focus-visible {
   font-size: 11px;
 }
 
+.guard-row .guard-number {
+  flex: 0 0 3ch;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
 .guard-select-wrap {
   position: relative;
   display: flex;
