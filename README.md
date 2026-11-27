@@ -4,7 +4,7 @@
 
 Build guards, experiment with object schemas, explore collections and unions, understand type narrowing, and generate TypeScript you can use in your projects.
 
-> **Alpha:** This is an independent community project, not an official is-kit product. The interface and supported examples are still evolving. Browser code execution is enabled for experimentation, but its security review is **not complete**. Do not execute untrusted or sensitive code.
+> **Alpha:** This is an independent community project, not an official is-kit product. The interface and supported examples are still evolving. Browser code execution is available for experimentation and has passed targeted security tests, but it has **not** undergone a comprehensive security audit. Do not execute untrusted or sensitive code.
 
 **[Try the live playground](https://skmoniri.github.io/is-kit-playground/)** · **[is-kit documentation](https://is-kit.dev/en)** · **[is-kit repository](https://github.com/necoz-oss/is-kit)**
 
@@ -45,7 +45,11 @@ The playground uses a hidden iframe and `MessageChannel` to communicate with the
 
 A separate **origin** matters; placing both apps at different paths on the *same* GitHub Pages domain would not provide the same origin separation.
 
-**Security limitation:** Origin separation is only one defense. The current sandbox executes JavaScript using `new Function()`, and GitHub Pages does **not** serve the custom HTTP Content-Security-Policy headers defined for other hosting environments. In particular, worker-level network isolation has not been verified on GitHub Pages. The HTML CSP and iframe attributes must **not** be treated as proof that arbitrary untrusted code is safely contained. A thorough security review and adversarial tests are still needed before considering public execution production-safe.
+**Security status (November 2026):** The sandbox evaluates compiled JavaScript using a dynamically constructed async function inside a dedicated worker. It relies on separate-origin isolation, the sandbox document's CSP, browser worker restrictions, message-origin validation, request-size limits, and execution timeouts. The worker alone is **not** a security boundary.
+
+The deployed GitHub Pages sandbox has passed targeted browser tests for origin validation, network request blocking, worker CSP enforcement, execution cancellation, timeout recovery, malformed messages, and output limits. In particular, a production browser test observed a `connect-src` CSP violation **inside the execution worker**, supporting that the worker's network restriction is enforced in the tested browser environment.
+
+**Remaining limitations:** GitHub Pages does **not** apply the custom HTTP CSP headers in `sandbox/public/_headers`; the deployed sandbox instead uses an HTML CSP meta policy. HTTP headers and meta policies are not equivalent in all respects. Large or deeply nested values may consume substantial memory during console-output serialization *before* output is truncated. A three-second timeout does not guarantee protection against all resource-exhaustion attacks. Tests were not an exhaustive cross-browser or adversarial security audit. **Do not run untrusted or sensitive code.**
 
 ## Tech stack
 
@@ -139,7 +143,7 @@ Use the origin only — **no** `/repository/` path. The compiled sandbox checks 
 
 Deploy the generated **`dist-sandbox/`** directory at the root of a **different origin**. For the current demo, that is an organization Pages site at `https://is-kit-sandbox.github.io/`.
 
-> **Important:** Do not assume that copying the sandbox to GitHub Pages gives it production-grade isolation. GitHub Pages does not apply custom headers from `sandbox/public/_headers`, including the worker CSP. Before offering general-purpose code execution to others, use a hosting/security architecture that can enforce and verify the necessary restrictions, and test it against hostile input.
+> **Important:** GitHub Pages does not apply custom headers from `sandbox/public/_headers`. The current deployment has demonstrated worker-level `connect-src` enforcement through browser tests, but that is not equivalent to comprehensive production-grade isolation. If adapting this project for general-purpose or untrusted code execution, independently assess the hosting architecture, enforce and verify the required policies, and test hostile inputs across target browsers.
 
 ### 3. Connect and test
 
@@ -160,7 +164,7 @@ See the [official is-kit documentation](https://is-kit.dev/en) for its public AP
 
 ## Project status
 
-This project is in **alpha**. The visual exploration workflows and a working browser-execution proof of concept are available. The execution sandbox's security model, browser compatibility, accessibility, error handling, and documentation still need further testing and refinement.
+This project is in **alpha**. The visual exploration workflows and browser code execution are available. The automated suite currently includes 44 passing Playwright tests, of which 21 target sandbox security or lifecycle behavior. Lint, the UI build, the sandbox build, and the production dependency audit also passed in the November 2026 review. Browser compatibility, accessibility, error handling, resource-exhaustion hardening, and broader security assurance still need further work before a stable release.
 
 Contributions, reproducible bug reports, and suggestions for clearer guard-building workflows are welcome via [GitHub Issues](https://github.com/skmoniri/is-kit-playground/issues).
 
@@ -178,6 +182,7 @@ The project uses Playwright for automated browser testing.
 ```bash
 npm run lint
 npm run build
+npm run build:sandbox
 npm audit --omit=dev
 npx playwright test
 ```
@@ -186,12 +191,13 @@ The Playwright configuration uses an installed Google Chrome browser.
 
 The automated tests cover:
 
-- Sandbox origin isolation and CSP restrictions
-- Worker execution, timeouts, and recovery
+- Sandbox origin isolation, parent-origin validation, and CSP restrictions
+- Worker-level CSP violation reporting and network API restrictions
+- Malformed messages, execution cancellation, output limits, timeouts, and recovery
 - Guard Composer and visual explorers
 - Validation and generated TypeScript
 - Undo, redo, and workspace controls
 - Shareable URL restoration
 - Basic mobile and tablet responsiveness
 
-These tests do not constitute a comprehensive security or accessibility audit.
+**Latest local verification (November 27, 2026):** 44/44 Playwright tests passed, including 21 security-focused tests; lint and both production builds passed; `npm audit --omit=dev` reported zero vulnerabilities at the time of testing. These results are environment- and time-specific and do not constitute a comprehensive security or accessibility audit.
