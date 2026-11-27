@@ -1,15 +1,7 @@
-
 import { useEffect, useRef, useState } from "react";
-import {
-  Check,
-  Link2,
-  AlertCircle,
-} from "lucide-react";
+import { Check, Link2, AlertCircle } from "lucide-react";
 
-import {
-  createShareUrl,
-  type SharedWorkspace,
-} from "../../lib/share-state";
+import { createShareUrl, type SharedWorkspace } from "../../lib/share-state";
 
 type ShareWorkspaceProps = {
   workspace: SharedWorkspace;
@@ -20,17 +12,13 @@ export function ShareWorkspace({
   workspace,
   initialError = null,
 }: ShareWorkspaceProps) {
-  const [message, setMessage] =
-    useState<string | null>(initialError);
+  const [message, setMessage] = useState<string | null>(initialError);
 
   const [copied, setCopied] = useState(false);
 
-  const timeoutRef =
-    useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const previousWorkspaceRef = useRef(
-    JSON.stringify(workspace)
-  );
+  const previousWorkspaceRef = useRef(JSON.stringify(workspace));
 
   useEffect(() => {
     const current = JSON.stringify(workspace);
@@ -73,9 +61,7 @@ export function ShareWorkspace({
       setCopied(false);
 
       setMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to copy the link."
+        error instanceof Error ? error.message : "Unable to copy the link.",
       );
     }
   }
@@ -86,27 +72,18 @@ export function ShareWorkspace({
         type="button"
         className="copy-button"
         onClick={share}
-        aria-label="Copy shareable playground link"
+        aria-label={
+          copied ? "Copied! Shareable link" : "Share — copy playground link"
+        }
       >
-        {copied ? (
-          <Check size={15} />
-        ) : (
-          <Link2 size={15} />
-        )}
+        {copied ? <Check size={15} /> : <Link2 size={15} />}
 
         {copied ? "Copied!" : "Share"}
       </button>
 
       {message && (
-        <span
-          className="share-workspace-message"
-          role="status"
-        >
-          {copied ? (
-            <Check size={13} />
-          ) : (
-            <AlertCircle size={13} />
-          )}
+        <span className="share-workspace-message" role="status">
+          {copied ? <Check size={13} /> : <AlertCircle size={13} />}
 
           {message}
         </span>
